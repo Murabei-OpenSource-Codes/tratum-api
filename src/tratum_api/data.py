@@ -1,6 +1,7 @@
 """Tratum Python API."""
 import requests
 
+
 class TratumAPI:
     def __init__(
         self,
