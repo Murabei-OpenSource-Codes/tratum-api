@@ -54,4 +54,9 @@ class TratumAPI:
         Args:
             document_url (str): Url pointing to pdf.
         """
-        
+        url = "https://search.tratum.com.br/v1/url?page={document_url}".format(document_url=document_url)
+        headers = {
+            'Authorization': 'Bearer {token}'.format(token=self.token)
+        }
+        response = requests.get(url, headers=headers)
+        return response.text
