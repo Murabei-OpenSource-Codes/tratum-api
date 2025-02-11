@@ -89,16 +89,20 @@ class TratumAPI:
         }
         response = requests.post(url, headers=headers, json={})
         response_json = response.json()
-        if response_json['status'] not in ['sucess', 'processing']:
+        if response_json.get('status', None) not in ['sucess', 'processing']:
             raise TratumAPIProblemAPIException(
                 message="error related to internal problems in APIs "
                         "or services.",
                 payload={
                     "status_code": response.status_code,
-                    "status_description": response_json['status']
+                    "status_description": response_json.get('status', None)
                 }
             )
-        elif response_json['process']['status'] == 'INVALID':
+        elif (
+            'process' in response_json
+            and response_json.get(
+                'process', {}).get('status', None) == 'INVALID'
+        ):
             raise TratumAPIInvalidDocumentException(
                 message="invalid process number",
                 payload={
@@ -129,7 +133,7 @@ class TratumAPI:
                         "or services.",
                 payload={
                     "status_code": response.status_code,
-                    "status_description": response_json['status']
+                    "status_description": response_json.get('status', None)
                 }
             )
         elif not self.is__process_number__valid(process_number):

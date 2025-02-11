@@ -24,7 +24,7 @@ class TestNeuronLabAPI(unittest.TestCase):
         )
 
     def test1__monitor_valid_process(self):
-        process_number = "10045683220184013400"
+        process_number = "19777928520247108243"
         monitored_process = self.tratum_api.monitor_process(
             process_number=process_number)
 
@@ -38,7 +38,7 @@ class TestNeuronLabAPI(unittest.TestCase):
             "TratumAPIInvalidDocumentException: invalid process number")
 
     def test3__process_valid_detail(self):
-        process_number = "10045683220184013400"
+        process_number = "19777928520247108243"
         process_details = self.tratum_api.get_process_detail(
             process_number=process_number)
 
@@ -53,7 +53,7 @@ class TestNeuronLabAPI(unittest.TestCase):
 
     def test5__download_process_document(self):
         document_url = (
-            "Processos/401/10045683220184013400/PJETRF1/nao-concedida-a-antecipacao-de-tutela-07-07-2018-15-43.pdf"
+            "Processos/401/19777928520247108243/PJETRF1/nao-concedida-a-antecipacao-de-tutela-07-07-2018-15-43.pdf"
         )
         pdf_url = self.tratum_api.download_process_document(
             document_url=document_url)
