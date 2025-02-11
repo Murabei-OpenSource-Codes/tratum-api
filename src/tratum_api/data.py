@@ -89,7 +89,7 @@ class TratumAPI:
         }
         response = requests.post(url, headers=headers, json={})
         response_json = response.json()
-        if response_json['status'] != 'sucess':
+        if response_json['status'] not in ['sucess', 'processing']:
             raise TratumAPIProblemAPIException(
                 message="error related to internal problems in APIs "
                         "or services.",
