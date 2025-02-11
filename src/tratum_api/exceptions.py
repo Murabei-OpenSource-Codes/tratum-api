@@ -1,5 +1,6 @@
 """Custom exceptions for Neuron Lab API."""
 
+
 class TratumAPIException(Exception):
     def __repr__(self):
         template = "{class_name}: {message}"
@@ -20,3 +21,15 @@ class TratumAPIException(Exception):
             "type": self.__class__.__name__,
             "message": self.message}
         return rv
+
+
+class TratumAPIInvalidDocumentException(TratumAPIException):
+    pass
+
+
+class TratumAPIProblemAPIException(TratumAPIException):
+    pass
+
+
+class TratumAPIInvalidS3UrlException(TratumAPIException):
+    pass
