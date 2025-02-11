@@ -3,7 +3,7 @@ import requests
 from tratum_api.exceptions import (
     TratumAPIProblemAPIException,
     TratumAPIInvalidDocumentException,
-    TratumAPIInvalidS3UrlException)
+    )
 
 class TratumAPI:
     def __init__(
