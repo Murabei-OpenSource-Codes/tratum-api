@@ -152,7 +152,6 @@ class TratumAPI:
         }
         response = requests.get(url, headers=headers)
         s3_url = response.text
-        print(self.is__s3_url__valid(s3_url))
         if response.status_code != 200:
             raise TratumAPIProblemAPIException(
                 message="error related to internal problems in APIs "
@@ -160,11 +159,6 @@ class TratumAPI:
                 payload={
                     "status_code": response.status_code,
                 }
-            )
-        elif not self.is__s3_url__valid(s3_url):
-            raise TratumAPIInvalidS3UrlException(
-                message="invalid s3 url.",
-                payload={"s3_url": s3_url}
             )
         else:
             return s3_url
