@@ -29,7 +29,3 @@ class TratumAPIInvalidDocumentException(TratumAPIException):
 
 class TratumAPIProblemAPIException(TratumAPIException):
     pass
-
-
-class TratumAPIInvalidS3UrlException(TratumAPIException):
-    pass
