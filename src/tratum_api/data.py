@@ -143,6 +143,8 @@ class TratumAPI:
                     "process_number": process_number,
                 }
             )
+        else:
+            return response_json
 
     def download_process_document(self, document_url: str):
         """Download pdf file from process.
@@ -166,4 +168,3 @@ class TratumAPI:
             )
         else:
             return s3_url
-
