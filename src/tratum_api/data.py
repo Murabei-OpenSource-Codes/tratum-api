@@ -67,8 +67,7 @@ class TratumAPI:
 
         try:
             response = self.session.post(
-                url, headers=headers, json=data, timeout=60,
-                proxies=self._requests_proxies)
+                url, headers=headers, json=data, timeout=60)
             response.raise_for_status()
         except Exception:
             status_code = response.status_code
