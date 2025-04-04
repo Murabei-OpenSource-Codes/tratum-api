@@ -3,44 +3,65 @@ import os
 import unittest
 from tratum_api.data import TratumAPI
 from tratum_api.exceptions import (
-    TratumAPIException,
-    TratumAPIProblemAPIException,
-    TratumAPIInvalidDocumentException
-)
+    TratumAPIInvalidDocumentException, TratumAPILoginError)
+
 tratum_email = os.getenv("TRATUM_EMAIL")
 tratum_password = os.getenv("TRATUM_PASSWORD")
 organization_id = os.getenv("ORGANIZATION_ID")
 holder_id = os.getenv("HOLDER_ID")
+cnpj = os.getenv("CNPJ")
+
 
 class TestNeuronLabAPI(unittest.TestCase):
     """Test Neuron Lab api."""
-    def setUp(self):
-        self.tratum_api = TratumAPI(
-            tratum_email=tratum_email,
-            tratum_password=tratum_password,
-            organization_id=organization_id,
-            holder_id=holder_id,
-            cnpj="33009911000139",
-        )
 
-    def test1__monitor_valid_process(self):
+    def test__login(self):
+        """Test correct login."""
+        tratum_api = TratumAPI(
+            tratum_email=tratum_email, tratum_password=tratum_password,
+            organization_id=organization_id, holder_id=holder_id,
+            cnpj=cnpj)
+        return tratum_api
+
+    def test__login_error(self):
+        """Test correct raise when password is incorrect."""
+        # Random process to test API
+        with self.assertRaises(TratumAPILoginError):
+            TratumAPI(
+                tratum_email=tratum_email, tratum_password='wrong-pass', # NOQA
+                organization_id=organization_id, holder_id=holder_id,
+                cnpj=cnpj)
+
+    def test__monitor_valid_process(self):
+        """Test monitor valid process end-point."""
+        # Random process to test API
+        tratum_api = self.test__login()
+
         process_number = "19777928520247108243"
-        monitored_process = self.tratum_api.monitor_process(
+        monitored_process = tratum_api.monitor_process(
             process_number=process_number)
         self.assertEqual(monitored_process['status'], 'processing')
 
-    def test2__monitor_invalid_process(self):
+    def test__monitor_invalid_process(self):
+        """Test invalid process monitor."""
+        tratum_api = self.test__login()
+
+        # Random process to test API
         process_number = "00000000000000000000"
         with self.assertRaises(TratumAPIInvalidDocumentException) as context:
-            self.tratum_api.monitor_process(
+            tratum_api.monitor_process(
                 process_number=process_number)
         self.assertEqual(
             str(context.exception),
-            "TratumAPIInvalidDocumentException: invalid process number")
+            "TratumAPIInvalidDocumentException: Invalid process number")
 
-    def test3__process_valid_detail(self):
+    def test__process_valid_detail(self):
+        """Test invalid process monitor error."""
+        tratum_api = self.test__login()
+
+        # Random process to test API
         process_number = "10045683220184013400"
-        process_details = self.tratum_api.get_process_detail(
+        process_details = tratum_api.get_process_detail(
             process_number=process_number)
         self.assertListEqual(
             list(process_details.keys()),
@@ -62,22 +83,43 @@ class TestNeuronLabAPI(unittest.TestCase):
             ]
         )
 
-    def test4__process_invalid_detail(self):
+    def test__process_invalid_detail(self):
+        """Test invalid process detail error."""
+        tratum_api = self.test__login()
+
         process_number = "00000000000000000000"
         with self.assertRaises(TratumAPIInvalidDocumentException) as context:
-            self.tratum_api.get_process_detail(
+            tratum_api.get_process_detail(
                 process_number=process_number)
         self.assertEqual(
             str(context.exception),
             "TratumAPIInvalidDocumentException: invalid process number")
 
-    def test5__download_process_document(self):
+    def test__get_process_document_url(self):
+        """Get processed document."""
+        tratum_api = self.test__login()
+
+        # Random process to test API
         document_url = (
-            "Processos/401/10045683220184013400/PJETRF1/nao-concedida-a-antecipacao-de-tutela-07-07-2018-15-43.pdf"
-        )
-        pdf_url = self.tratum_api.download_process_document(
+            "Processos/401/10045683220184013400/PJETRF1/" +
+            "nao-concedida-a-antecipacao-de-tutela-07-07-2018-15-43.pdf")
+        pdf_url = tratum_api.get_process_document_url(
             document_url=document_url)
         self.assertEqual(
             pdf_url.split('?')[0],
-            'https://s3.us-east-2.amazonaws.com/process-files/Processos/401/10045683220184013400/PJETRF1/nao-concedida-a-antecipacao-de-tutela-07-07-2018-15-43.pdf'
+            'https://s3.us-east-2.amazonaws.com/process-files/Processos'
+            '/401/10045683220184013400/PJETRF1/'
+            'nao-concedida-a-antecipacao-de-tutela-07-07-2018-15-43.pdf'
         )
+
+    def test__download_process_document(self):
+        """Get processed document."""
+        tratum_api = self.test__login()
+
+        # Random process to test API
+        document_url = (
+            "Processos/401/10045683220184013400/PJETRF1/" +
+            "nao-concedida-a-antecipacao-de-tutela-07-07-2018-15-43.pdf")
+        document_content = tratum_api.download_process_document(
+            document_url=document_url)
+        self.assertTrue(type(document_content) is bytes)
