@@ -34,7 +34,7 @@ requirements = parse_requirements(requirements_path)
 
 setup(
     name='tratum-api',
-    version='0.6.2',
+    version='0.6.3',
     install_requires=requirements,  # Uses parsed requirements.txt
     include_package_data=True,
     license='BSD-3-Clause License',
