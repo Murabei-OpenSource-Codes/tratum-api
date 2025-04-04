@@ -24,7 +24,8 @@ def parse_requirements(filename):
 
 
 # Read README
-with open(os.path.join(os.path.dirname(__file__), 'README.md'), encoding='utf-8') as f:
+with open(os.path.join(os.path.dirname(__file__), 'README.md'),
+          encoding='utf-8') as f:
     README = f.read()
 
 # Parse requirements.txt
@@ -33,7 +34,7 @@ requirements = parse_requirements(requirements_path)
 
 setup(
     name='tratum-api',
-    version='0.4',
+    version='0.6.3',
     install_requires=requirements,  # Uses parsed requirements.txt
     include_package_data=True,
     license='BSD-3-Clause License',
