@@ -10,6 +10,7 @@ tratum_password = os.getenv("TRATUM_PASSWORD")
 organization_id = os.getenv("ORGANIZATION_ID")
 holder_id = os.getenv("HOLDER_ID")
 cnpj = os.getenv("CNPJ")
+valid_process_number = os.getenv("VALID_PROCESS_IN_TRATUM")
 
 
 class TestNeuronLabAPI(unittest.TestCase):
@@ -60,26 +61,24 @@ class TestNeuronLabAPI(unittest.TestCase):
         tratum_api = self.test__login()
 
         # Random process to test API
-        process_number = "10045683220184013400"
+        process_number = valid_process_number
         process_details = tratum_api.get_process_detail(
             process_number=process_number)
         self.assertListEqual(
             list(process_details.keys()),
             [
-                'process', 'state', 'id', 'resource', 'has_resource',
-                'external_code', 'classe', 'last_class_message', 'court',
-                'counrt_type', 'value_claim', 'value_claim_str',
-                'range_value_claim', 'court_name', 'judging_organ', 'status',
-                'status_custom', 'distribution_date',
-                'distribution_date_format', 'year_distribution_date',
-                'month_distribution_date', 'subject', 'jurisdiction',
-                'authors', 'defendants', 'authors_name',
-                'representative_authors_name', 'defendants_name',
-                'representative_defendants_name', 'last_update',
-                'last_update_message', 'court_info', 'ref_docs',
-                'process_organization', 'documents', 'has_session',
-                'has_session_video', 'process_id', 'type_court',
-                'related_process', 'instances', 'content_all', 'part_matches'
+                "process", "state", "id", "resource", "has_resource",
+                "external_code", "classe", "last_class_message", "court",
+                "counrt_type", "value_claim", "value_claim_str",
+                "range_value_claim", "court_name", "judging_organ",
+                "status", "status_custom", "distribution_date",
+                "distribution_date_format", "year_distribution_date",
+                "month_distribution_date", "subject", "jurisdiction",
+                "person_custom", "last_update", "last_update_message",
+                "inactive_organization", "court_info", "ref_docs",
+                "process_organization", "documents", "has_session",
+                "has_session_video", "process_id",
+                "type_court", "instances", "content_all"
             ]
         )
 
@@ -123,3 +122,12 @@ class TestNeuronLabAPI(unittest.TestCase):
         document_content = tratum_api.download_process_document(
             document_url=document_url)
         self.assertTrue(type(document_content) is bytes)
+
+    def test__remove_from_monitoring(self):
+        """Test invalid process monitor error."""
+        tratum_api = self.test__login()
+
+        process_number = valid_process_number
+        operation_result = tratum_api.remove_monitor_process(
+            process_number=process_number)
+        self.assertEqual(operation_result, True)
