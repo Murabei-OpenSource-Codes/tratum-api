@@ -180,6 +180,45 @@ class TratumAPI:
         # If passed the tests, it will be returned as valid response
         return response_json
 
+    def remove_monitor_process(self, process_number: str) -> bool:
+        """Remove process from monitoring.
+
+        Args:
+            process_number (str):
+                Process document.
+        Raises:
+            TratumAPIProblemAPIException:
+                Raise error if get forbiden status.
+
+        Returns:
+            bool: True if operation had success, otherwise false.
+        """
+        url = (
+            "https://search.tratum.com.br/v1/organization/" +
+            "{organization_id}/process/{process_number}/INACTIVE").format(
+            organization_id=self.organization_id,
+            process_number=process_number)
+        headers = {
+            'Authorization': 'Bearer {token}'.format(token=self.token)}
+        try:
+            response = self.session.put(url, headers=headers, json={})
+            response.raise_for_status()
+        except Exception:
+            response_json = response.json()
+            obs = response_json.get('obs', "")
+            msg = (
+                "Error related to internal problems in APIs "
+                "or services. Tratum message [{obs}]").format(obs=obs)
+            raise TratumAPIProblemAPIException(
+                message=msg, payload={
+                    "process_number": process_number,
+                    "status_code": response.status_code,
+                    "response_payload": response_json})
+
+        response_json = response.json()
+        operation_success = response_json.get("sucess")
+        return operation_success
+
     def get_process_detail(self, process_number: str):
         """Fetch process details in Tratum API.
 
