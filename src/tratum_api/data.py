@@ -1,6 +1,7 @@
 """Tratum Python API."""
 import os
 import requests
+from requests.exceptions import HTTPError
 from tratum_api.exceptions import (
     TratumAPILoginError, TratumAPIProblemAPIException,
     TratumAPIInvalidDocumentException)
@@ -48,38 +49,42 @@ class TratumAPI:
         self._tratum_email = tratum_email
         self._tratum_password = tratum_password
 
-        # Login to application
-        self.login()
+        # Set token to None initialy
+        self.token = None
+        """Token associated with tratum login."""
 
-    def login(self):
+    def login(self, force_refresh: bool = False):
         """Login at Tratum API.
 
         Uses attributes `_tratum_email` and `_tratum_password` to login
         at Tratum and retrive token.
         """
-        url = "https://search.tratum.com.br/v1/login"
-        headers = {
-            "Content-Type": "application/json"
-        }
-        data = {
-            "email": self._tratum_email,
-            "password": self._tratum_password}
+        if self.token is None or force_refresh:
+            url = "https://search.tratum.com.br/v1/login"
+            headers = {
+                "Content-Type": "application/json"}
+            data = {
+                "email": self._tratum_email,
+                "password": self._tratum_password}
 
-        try:
-            response = self.session.post(
-                url, headers=headers, json=data, timeout=60)
-            response.raise_for_status()
-        except Exception:
-            status_code = response.status_code
-            response_text = response.text
-            msg = (
-                "Error when loggin to TratumAPI.\n"
-                "status_code: [{status_code}]").format(status_code=status_code)
-            raise TratumAPILoginError(
-                msg, payload={
-                    "status_code": status_code,
-                    "response_payload": response_text})
-        self.token = response.json()['token']
+            try:
+                response = self.session.post(
+                    url, headers=headers, json=data, timeout=60)
+                response.raise_for_status()
+            except HTTPError as http_err:
+                status_code = http_err.response.status_code
+                response_text = response.text
+                msg = (
+                    "Error when loggin to TratumAPI.\n"
+                    "status_code: [{status_code}]").format(
+                        status_code=status_code)
+                raise TratumAPILoginError(
+                    msg, payload={
+                        "status_code": status_code,
+                        "response_payload": response_text})
+            except Exception as err:
+                raise err
+            self.token = response.json()['token']
         return True
 
     def is__process_number__valid(self, process_number: str):
@@ -124,6 +129,7 @@ class TratumAPI:
             process_number (str):
                 Process document.
         """
+        self.login()
         url = (
             "https://search.tratum.com.br/v2/importProcess/" +
             "{organization_id}/{process_number}/?document={cnpj}").format(
@@ -135,8 +141,8 @@ class TratumAPI:
         try:
             response = self.session.post(url, headers=headers, json={})
             response.raise_for_status()
-        except Exception:
-            response_json = response.json()
+        except HTTPError as http_err:
+            response_json = http_err.response.json()
             obs = response_json.get('obs', "")
             msg = (
                 "Error related to internal problems in APIs "
@@ -146,6 +152,8 @@ class TratumAPI:
                     "process_number": process_number,
                     "status_code": response.status_code,
                     "response_payload": response_json})
+        except Exception as e:
+            raise e
 
         response_json = response.json()
         # Invalid and other errors at processing are returned with status
@@ -186,6 +194,7 @@ class TratumAPI:
         Args:
             process_number (str):
                 Process document.
+
         Raises:
             TratumAPIProblemAPIException:
                 Raise error if get forbiden status.
@@ -193,6 +202,7 @@ class TratumAPI:
         Returns:
             bool: True if operation had success, otherwise false.
         """
+        self.login()
         url = (
             "https://search.tratum.com.br/v1/organization/" +
             "{organization_id}/process/{process_number}/INACTIVE").format(
@@ -203,8 +213,8 @@ class TratumAPI:
         try:
             response = self.session.put(url, headers=headers, json={})
             response.raise_for_status()
-        except Exception:
-            response_json = response.json()
+        except HTTPError as http_err:
+            response_json = http_err.response.json()
             obs = response_json.get('obs', "")
             msg = (
                 "Error related to internal problems in APIs "
@@ -214,6 +224,8 @@ class TratumAPI:
                     "process_number": process_number,
                     "status_code": response.status_code,
                     "response_payload": response_json})
+        except Exception as e:
+            raise e
 
         response_json = response.json()
         operation_success = response_json.get("sucess")
@@ -226,6 +238,7 @@ class TratumAPI:
             process_number (str):
                 Process document.
         """
+        self.login()
         url = (
             "https://search.tratum.com.br/v1/" +
             "process/{organization_id}/{process_number}").format(
@@ -266,6 +279,7 @@ class TratumAPI:
         Returns:
             Return the AWS S3 authenticated URL.
         """
+        self.login()
         url = "https://search.tratum.com.br/v1/url?page={document_url}"\
             .format(document_url=document_url)
         headers = {
@@ -274,14 +288,14 @@ class TratumAPI:
         try:
             response = self.session.get(url, headers=headers)
             response.raise_for_status()
-        except Exception:
+        except HTTPError as http_err:
             raise TratumAPIProblemAPIException(
-                message="error related to internal problems in APIs "
-                        "or services.",
-                payload={
-                    "status_code": response.status_code,
-                }
-            )
+                message=(
+                    "error related to internal problems in APIs "
+                    "or services."),
+                payload={"status_code": http_err.response.status_code})
+        except Exception as e:
+            raise e
 
         s3_url = response.text
         return s3_url
@@ -296,16 +310,20 @@ class TratumAPI:
         Returns:
             Return the content of the document at the URL.
         """
+        self.login()
         authenticated_url = self.get_process_document_url(
             document_url=document_url)
         try:
             response = self.session.get(authenticated_url)
             response.raise_for_status()
-        except Exception:
+        except HTTPError as http_err:
             msg = (
                 "Error when downloading file from AWS. Status code: "
-                "[{status_code}]").format(status_code=response.status_code)
+                "[{status_code}]").format(
+                    status_code=http_err.response.status_code)
             raise TratumAPIProblemAPIException(
                 message=msg,
                 payload={"status_code": response.status_code})
+        except Exception as e:
+            raise e
         return response.content
